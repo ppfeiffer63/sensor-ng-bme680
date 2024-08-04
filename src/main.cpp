@@ -45,17 +45,20 @@ Adafruit_BME680 sensor;
 void setup(void) {
   Serial.begin(115200);
   delay(300);
-  Serial.println("Mounting LittleFS ...");
+  
+  Serial.printf("type is %s\n", typ);
+  
+  Serial.printf("Mounting LittleFS ...");
 	if (!LittleFS.begin()) {
 		// SPIFFS will be configured on reboot
 		Serial.println("ERROR: Cannot mount LittleFS, Rebooting");
 		delay(1000);
 		ESP.restart();
 		}
-  
-  if (!loadConfig){
+  status =loadConfig();
+  if (!status){
+    Serial.println("default config...");
     defaultConfig();
-    saveConfig();
   }
   delay(2000);
   

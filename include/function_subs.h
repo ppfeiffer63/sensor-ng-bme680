@@ -4,6 +4,12 @@ bool loadConfig() {
         Serial.println("Failed to open config file");
         return false;
     }
+    Serial.println("Read config....");
+    // Extract each characters by one by one
+    while (configFile.available()) {
+      Serial.print((char)configFile.read());
+    }
+    Serial.println();
 
     StaticJsonDocument<512> doc;
     auto error = deserializeJson(doc, configFile);
@@ -30,32 +36,38 @@ bool loadConfig() {
 }
 
 bool defaultConfig(){
-  File configFile = LittleFS.open("/config.json", "w");
-    if (!configFile) {
-        Serial.println("Failed to write config file");
-        return false;
-    }
-
     StaticJsonDocument<512> doc;
-    auto error = deserializeJson(doc, configFile);
-    if (error) {
-        Serial.println("Failed to parse config file");
-        return false;
-    }
-
     strlcpy(config.host, "haus_75", sizeof(config.host));    
-    strlcpy(config.ssid, "Sensor", sizeof(config.ssid));  
-    strlcpy(config.wifipassword, "sensorgarten", sizeof(config.wifipassword));  
+    strlcpy(config.ssid, "devnet-34", sizeof(config.ssid));  
+    strlcpy(config.wifipassword, "testerwlan", sizeof(config.wifipassword));  
     strlcpy(config.adminuser, "admin", sizeof(config.adminuser));  
     strlcpy(config.adminpassword, "admin", sizeof(config.adminpassword));  
     strlcpy(config.webuser, "admin", sizeof(config.webuser));  
     strlcpy(config.webpassword, "admin", sizeof(config.webpassword));  
-    strlcpy(config.mqttserver,"192.168.12.2", sizeof(config.mqttserver));
+    strlcpy(config.mqttserver,"192.168.12.3", sizeof(config.mqttserver));
     config.webserverport =  80;
 
+    doc["ssid"] = config.ssid;
+    doc["host"] = config.host;
+    doc["wifipass"] = config.wifipassword;
+    doc["adminuser"] = config.adminuser;
+    doc["adminpass"] = config.adminpassword;
+    doc["webuser"] = config.webuser;
+    doc["webpass"] = config.webpassword;
+    doc["mqttserver"] = config.mqttserver;
+    doc["port"] = config.webserverport;
     // Real world application would store these values in some variables for
     // later use.
+    File configFile = LittleFS.open("/config.json", "w");
+    if (!configFile) {
+        Serial.println("Failed to open config file for writing");
+        return false;
+    }
 
+    // Serialize JSON to file
+    if (serializeJson(doc, configFile) == 0) {
+        Serial.println(F("Failed to write to file"));
+    }
     configFile.close();
     return true;
 }
@@ -202,7 +214,7 @@ bool initWiFi() {
 }
 
 void initPortal(){
-  WiFi.softAP("Sensor-WiFi-Manager");
+  WiFi.softAP("WiFi-Manager");
   server.on("/", HTTP_GET,[](AsyncWebServerRequest *request){
     request->send(LittleFS,"/wifimanager.html","text/html");
   });
