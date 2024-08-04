@@ -29,6 +29,37 @@ bool loadConfig() {
     return true;
 }
 
+bool defaultConfig(){
+  File configFile = LittleFS.open("/config.json", "w");
+    if (!configFile) {
+        Serial.println("Failed to write config file");
+        return false;
+    }
+
+    StaticJsonDocument<512> doc;
+    auto error = deserializeJson(doc, configFile);
+    if (error) {
+        Serial.println("Failed to parse config file");
+        return false;
+    }
+
+    strlcpy(config.host, "haus_75", sizeof(config.host));    
+    strlcpy(config.ssid, "Sensor", sizeof(config.ssid));  
+    strlcpy(config.wifipassword, "sensorgarten", sizeof(config.wifipassword));  
+    strlcpy(config.adminuser, "admin", sizeof(config.adminuser));  
+    strlcpy(config.adminpassword, "admin", sizeof(config.adminpassword));  
+    strlcpy(config.webuser, "admin", sizeof(config.webuser));  
+    strlcpy(config.webpassword, "admin", sizeof(config.webpassword));  
+    strlcpy(config.mqttserver,"192.168.12.2", sizeof(config.mqttserver));
+    config.webserverport =  80;
+
+    // Real world application would store these values in some variables for
+    // later use.
+
+    configFile.close();
+    return true;
+}
+
 bool saveConfig() {
     StaticJsonDocument<512> doc;
 
@@ -209,16 +240,17 @@ void setupsensor() {
     unsigned status;
     
     // default settings
-    status = sensor.begin(0x76);  
+    status = sensor.begin();  
     // You can also pass in a Wire library object like &Wire2
     // status = bme.begin(0x76, &Wire2)
     if (!status) {
         Serial.println("Could not find a valid BME280 sensor, check wiring, address, sensor ID!");
-        Serial.print("SensorID was: 0x"); Serial.println(sensor.sensorID(),16);
-        Serial.print("        ID of 0xFF probably means a bad address, a BMP 180 or BMP 085\n");
-        Serial.print("   ID of 0x56-0x58 represents a BMP 280,\n");
-        Serial.print("        ID of 0x60 represents a BME 280.\n");
-        Serial.print("        ID of 0x61 represents a BME 680.\n");
         while (1) delay(10);
     }
+    // Set up oversampling and filter initialization
+  sensor.setTemperatureOversampling(BME680_OS_8X);
+  sensor.setHumidityOversampling(BME680_OS_2X);
+  sensor.setPressureOversampling(BME680_OS_4X);
+  sensor.setIIRFilterSize(BME680_FILTER_SIZE_3);
+  sensor.setGasHeater(320, 150); // 320*C for 150 ms
 }

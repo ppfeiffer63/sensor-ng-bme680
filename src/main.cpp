@@ -16,7 +16,7 @@
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 #include <Adafruit_Sensor.h>
-#include <Adafruit_BME280.h>
+#include <Adafruit_BME680.h>
 
 const char* ssid = "devnet-34";
 const char* password = "testerwlan";
@@ -34,7 +34,7 @@ AsyncWebServer server(80);
 // Create an Event Source on /events
 AsyncEventSource events("/events");
 // Create Sensor object
-Adafruit_BME280 sensor;
+Adafruit_BME680 sensor;
 
 
 #include <variables.h>
@@ -53,8 +53,10 @@ void setup(void) {
 		ESP.restart();
 		}
   
-  status = loadConfig();
-  setupsensor();
+  if (!loadConfig){
+    defaultConfig();
+    saveConfig();
+  }
   delay(2000);
   
   if (initWiFi()){
